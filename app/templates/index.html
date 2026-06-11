@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ── Stats row ─────────────────────────────────────────────── -->
+{% set total    = estudiantes | length %}
+{% set aprobados = estudiantes | selectattr('nota', 'ge', 6) | list | length %}
+{% set reprobados = total - aprobados %}
+
+<div class="stats-row" role="region" aria-label="Estadísticas del grupo">
+  <div class="stat-card blue">
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total estudiantes</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-value">{{ aprobados }}</div>
+    <div class="stat-label">Aprobados</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-value">{{ reprobados }}</div>
+    <div class="stat-label">Reprobados</div>
+  </div>
+</div>
+
+<!-- ── Page header ───────────────────────────────────────────── -->
+<div class="page-header">
+  <div class="page-title">
+    <div class="title-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+        <line x1="9" y1="12" x2="15" y2="12"/>
+        <line x1="9" y1="16" x2="13" y2="16"/>
+      </svg>
+    </div>
+    <div>
+      <h2>Lista de Estudiantes</h2>
+      <p class="text-muted-3d">Gestión del registro académico</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('buscar') }}" class="btn-3d btn-ghost-3d" id="btnBuscarNav" aria-label="Ir a búsqueda">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Buscar
+    </a>
+    <a href="{{ url_for('agregar') }}" class="btn-3d btn-success-3d" id="btnAgregar" aria-label="Agregar estudiante">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Agregar
+    </a>
+  </div>
+</div>
+
+<!-- ── Tabla ──────────────────────────────────────────────────── -->
+{% if estudiantes %}
+<div class="table-3d-wrap" role="region" aria-label="Tabla de estudiantes">
+  <table class="table-3d" id="tablaEstudiantes" aria-label="Lista de estudiantes registrados">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Estudiante</th>
+        <th scope="col">Carnet</th>
+        <th scope="col">Nota</th>
+        <th scope="col">Estado</th>
+        <th scope="col">Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in estudiantes %}
+      <tr>
+        <td><span class="id-badge" aria-label="ID {{ e.id }}">{{ e.id }}</span></td>
+        <td>
+          <div class="student-name">
+            <div class="student-avatar" aria-hidden="true">
+              {{ e.nombre[0] if e.nombre else '?' }}
+            </div>
+            <span>{{ e.nombre }}</span>
+          </div>
+        </td>
+        <td><span class="carnet-tag">{{ e.carnet }}</span></td>
+        <td>
+          <span class="nota-badge {% if e.nota >= 6 %}nota-pass{% else %}nota-fail{% endif %}"
+                aria-label="Nota: {{ e.nota }}">
+            {% if e.nota >= 6 %}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            {% else %}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            {% endif %}
+            {{ e.nota }}
+          </span>
+        </td>
+        <td>
+          <span class="estado-text {% if e.nota >= 6 %}estado-pass{% else %}estado-fail{% endif %}">
+            {% if e.nota >= 6 %}Aprobado{% else %}Reprobado{% endif %}
+          </span>
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('eliminar', id=e.id) }}"
+                onsubmit="return confirm('¿Eliminar a {{ e.nombre }}? Esta acción no se puede deshacer.')">
+            <button type="submit" class="btn-3d btn-danger-3d btn-sm-table"
+                    aria-label="Eliminar a {{ e.nombre }}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+              Eliminar
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<!-- Estado vacío -->
+<div class="glass-card">
+  <div class="empty-state">
+    <div class="empty-icon" aria-hidden="true">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        <line x1="9" y1="9" x2="15" y2="9"/>
+        <line x1="9" y1="13" x2="13" y2="13"/>
+      </svg>
+    </div>
+    <h3>Sin estudiantes registrados</h3>
+    <p>Agrega el primer estudiante para comenzar a gestionar el grupo.</p>
+    <a href="{{ url_for('agregar') }}" class="btn-3d btn-success-3d" style="margin-top:1.5rem;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Agregar primer estudiante
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Sistema Maestro{% endblock %} — EduSecure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- ── Fondos 3D ─────────────────────────────────────────────── -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="particle-layer" aria-hidden="true">
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+
+  <!-- ── Overlay mobile ────────────────────────────────────────── -->
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <!-- ── Botón hamburguesa (mobile) ───────────────────────────── -->
+  <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menú" aria-expanded="false">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="3" y1="6"  x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <div class="app-wrapper">
+
+    {% if session.get('user') %}
+    <!-- ════════════════════════════════════════════════════════
+         SIDEBAR
+    ════════════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú lateral">
+
+      <!-- Cabecera: logo + toggle -->
+      <div class="sidebar-head">
+        <a class="sidebar-brand" href="{{ url_for('index') }}" aria-label="Inicio EduSecure">
+          <div class="brand-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+          <span class="brand-name">EduSecure</span>
+        </a>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Colapsar menú">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Perfil del usuario -->
+      <div class="sidebar-user">
+        <div class="user-avatar" aria-hidden="true">{{ session['user'][0] }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ session['user'] }}</div>
+          <div class="user-role">Maestro</div>
+        </div>
+      </div>
+
+      <!-- Navegación -->
+      <nav class="sidebar-nav" aria-label="Navegación principal">
+
+        <div class="nav-section-label">Principal</div>
+
+        <a href="{{ url_for('index') }}"
+           class="nav-link-3d {% if request.endpoint == 'index' %}active{% endif %}"
+           aria-current="{% if request.endpoint == 'index' %}page{% endif %}">
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+          <span class="nav-tooltip">Dashboard</span>
+        </a>
+
+        <div class="nav-section-label">Estudiantes</div>
+
+        <a href="{{ url_for('agregar') }}"
+           class="nav-link-3d nav-add {% if request.endpoint == 'agregar' %}active{% endif %}"
+           aria-current="{% if request.endpoint == 'agregar' %}page{% endif %}">
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+            </svg>
+          </span>
+          <span class="nav-label">Agregar estudiante</span>
+          <span class="nav-tooltip">Agregar</span>
+        </a>
+
+        <a href="{{ url_for('buscar') }}"
+           class="nav-link-3d nav-search {% if request.endpoint == 'buscar' %}active{% endif %}"
+           aria-current="{% if request.endpoint == 'buscar' %}page{% endif %}">
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <span class="nav-label">Buscar estudiante</span>
+          <span class="nav-tooltip">Buscar</span>
+        </a>
+
+        <div class="nav-section-label">Sistema</div>
+
+        <a href="{{ url_for('api_estudiantes') }}"
+           class="nav-link-3d"
+           target="_blank" rel="noopener"
+           aria-label="Ver API JSON en nueva pestaña">
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </span>
+          <span class="nav-label">API JSON</span>
+          <span class="nav-tooltip">API JSON</span>
+        </a>
+
+      </nav>
+
+      <!-- Footer del sidebar: cerrar sesión -->
+      <div class="sidebar-footer">
+        <a href="{{ url_for('logout') }}" class="btn-logout" aria-label="Cerrar sesión">
+          <span class="logout-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </span>
+          <span class="logout-label">Cerrar sesión</span>
+        </a>
+      </div>
+
+    </aside>
+    {% endif %}
+
+    <!-- ════════════════════════════════════════════════════════
+         ÁREA PRINCIPAL
+    ════════════════════════════════════════════════════════ -->
+    <div class="main-area" id="mainArea">
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div style="padding: 1.25rem 2.5rem 0; position:relative; z-index:2;">
+          {% for category, message in messages %}
+            <div class="alert-3d
+              {% if category == 'success' %}alert-success-3d
+              {% elif category == 'danger'  %}alert-danger-3d
+              {% elif category == 'warning' %}alert-warning-3d
+              {% else %}alert-info-3d{% endif %}"
+              role="alert" style="margin-bottom:0.6rem;">
+              {% if category == 'success' %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              {% elif category == 'danger' %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              {% elif category == 'warning' %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              {% else %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {% endif %}
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Contenido de la página -->
+      <main class="page-content" role="main">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer-3d" role="contentinfo">
+        <p>
+          <span>EduSecure Sistema Maestro</span>
+          <span class="dot"></span>
+          <span class="badge-owasp">OWASP TOP 10</span>
+          <span class="dot"></span>
+          <span>Demo de Pruebas de Seguridad &amp; Automatización</span>
+        </p>
+      </footer>
+
+    </div><!-- /main-area -->
+
+  </div><!-- /app-wrapper -->
+
+  <!-- ── Scripts sidebar ───────────────────────────────────────── -->
+  <script>
+    (function () {
+      const sidebar     = document.getElementById('sidebar');
+      const mainArea    = document.getElementById('mainArea');
+      const toggle      = document.getElementById('sidebarToggle');
+      const mobileBtn   = document.getElementById('mobileMenuBtn');
+      const overlay     = document.getElementById('sidebarOverlay');
+
+      if (!sidebar) return;
+
+      const COLLAPSED_KEY = 'sidebar_collapsed';
+      const isMobile = () => window.innerWidth <= 768;
+
+      /* ── Estado inicial (desktop) ── */
+      if (!isMobile() && localStorage.getItem(COLLAPSED_KEY) === '1') {
+        sidebar.classList.add('collapsed');
+        mainArea.classList.add('collapsed');
+      }
+
+      /* ── Toggle colapsar (desktop) ── */
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          if (isMobile()) return;
+          const isNowCollapsed = sidebar.classList.toggle('collapsed');
+          mainArea.classList.toggle('collapsed', isNowCollapsed);
+          localStorage.setItem(COLLAPSED_KEY, isNowCollapsed ? '1' : '0');
+          toggle.setAttribute('aria-expanded', String(!isNowCollapsed));
+        });
+      }
+
+      /* ── Menú hamburguesa (mobile) ── */
+      function openMobile() {
+        sidebar.classList.add('mobile-open');
+        overlay.classList.add('visible');
+        overlay.removeAttribute('aria-hidden');
+        if (mobileBtn) mobileBtn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeMobile() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        if (mobileBtn) mobileBtn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+
+      if (mobileBtn) mobileBtn.addEventListener('click', openMobile);
+      if (overlay)   overlay.addEventListener('click',   closeMobile);
+
+      /* Cerrar con Escape */
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) closeMobile();
+      });
+    })();
+  </script>
+
+</body>
+</html>
