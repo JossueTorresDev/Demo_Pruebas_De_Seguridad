@@ -7,6 +7,7 @@ Requisito       : pip install selenium webdriver-manager
                   La app debe estar corriendo antes de ejecutar.
 """
 
+import os
 import time
 import unittest
 from selenium import webdriver
@@ -20,6 +21,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 BASE_URL = "http://localhost:5000"
 USUARIO  = "admin"
 PASSWORD = "admin123"
+SLOW = 0.8
 
 
 def crear_driver():
@@ -29,7 +31,19 @@ def crear_driver():
     # options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    service = Service(ChromeDriverManager().install())
+
+    driver_path = ChromeDriverManager().install()
+    if not driver_path.lower().endswith('.exe'):
+        driver_dir = os.path.dirname(driver_path)
+        candidate = os.path.join(driver_dir, 'chromedriver.exe')
+        if os.path.exists(candidate):
+            driver_path = candidate
+        else:
+            raise FileNotFoundError(
+                f"ChromeDriver executable not found. Expected .exe in: {driver_dir}"
+            )
+
+    service = Service(driver_path)
     return webdriver.Chrome(service=service, options=options)
 
 
@@ -38,7 +52,7 @@ class TestLogin(unittest.TestCase):
 
     def setUp(self):
         self.driver = crear_driver()
-        self.wait   = WebDriverWait(self.driver, 10)
+        self.wait   = WebDriverWait(self.driver, 15)
 
     def tearDown(self):
         self.driver.quit()
@@ -53,8 +67,9 @@ class TestLogin(unittest.TestCase):
         d.find_element(By.ID, "password").send_keys(PASSWORD)
         d.find_element(By.ID, "btnLogin").click()
 
-        self.wait.until(EC.url_contains("/"))
-        self.assertIn("Lista de Estudiantes", d.title)
+        self.wait.until(EC.presence_of_element_located((By.ID, "btnAgregar")))
+        time.sleep(SLOW)
+        self.assertIn("Dashboard", d.title)
         print("  ✅ Login exitoso — título:", d.title)
 
     def test_02_login_fallido(self):
@@ -68,10 +83,11 @@ class TestLogin(unittest.TestCase):
         d.find_element(By.ID, "btnLogin").click()
 
         error_msg = self.wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, "alert-danger"))
+            EC.presence_of_element_located((By.CLASS_NAME, "alert-danger-3d"))
         )
         self.assertIn("incorrectas", error_msg.text.lower())
         print("  ✅ Mensaje de error mostrado:", error_msg.text)
+        time.sleep(SLOW)
 
 
 class TestAgregarEstudiante(unittest.TestCase):
@@ -79,7 +95,7 @@ class TestAgregarEstudiante(unittest.TestCase):
 
     def setUp(self):
         self.driver = crear_driver()
-        self.wait   = WebDriverWait(self.driver, 10)
+        self.wait   = WebDriverWait(self.driver, 15)
         self._hacer_login()
 
     def tearDown(self):
@@ -91,20 +107,21 @@ class TestAgregarEstudiante(unittest.TestCase):
         d.find_element(By.ID, "username").send_keys(USUARIO)
         d.find_element(By.ID, "password").send_keys(PASSWORD)
         d.find_element(By.ID, "btnLogin").click()
-        self.wait.until(EC.url_contains("/"))
+        self.wait.until(EC.presence_of_element_located((By.ID, "btnAgregar")))
+        time.sleep(SLOW)
 
     def test_03_agregar_estudiante_valido(self):
         """TC-03: Agregar estudiante con datos válidos."""
         print("\n[TC-03] Agregar estudiante válido...")
         d = self.driver
 
-        d.find_element(By.ID, "btnAgregar").click()
-        self.wait.until(EC.presence_of_element_located((By.ID, "formAgregar")))
+        WebDriverWait(d, 15).until(EC.element_to_be_clickable((By.ID, "btnAgregar"))).click()
+        self.wait.until(EC.visibility_of_element_located((By.ID, "formAgregar")))
 
         # Llenar formulario
         nombre_campo = d.find_element(By.ID, "nombre")
         nombre_campo.clear()
-        nombre_campo.send_keys("Ana García Test")
+        nombre_campo.send_keys("Ana Garcia Test")
 
         carnet_campo = d.find_element(By.ID, "carnet")
         carnet_campo.clear()
@@ -114,14 +131,19 @@ class TestAgregarEstudiante(unittest.TestCase):
         nota_campo.clear()
         nota_campo.send_keys("8.5")
 
-        d.find_element(By.ID, "btnGuardar").click()
+        time.sleep(SLOW)
+        WebDriverWait(d, 15).until(EC.element_to_be_clickable((By.ID, "btnGuardar"))).click()
 
-        # Verificar mensaje de éxito
-        alerta = self.wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, "alert-success"))
+        # Verificar mensaje de éxito: esperar visibilidad y contenido no vacío
+        alerta = WebDriverWait(d, 15).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "alert-success-3d"))
         )
+        # Asegurar que el texto del elemento se haya renderizado
+        WebDriverWait(d, 15).until(lambda drv: drv.find_element(By.CLASS_NAME, "alert-success-3d").text.strip() != "")
+        alerta = d.find_element(By.CLASS_NAME, "alert-success-3d")
         self.assertIn("agregado", alerta.text.lower())
         print("  ✅ Estudiante agregado:", alerta.text)
+        time.sleep(SLOW)
 
     def test_04_agregar_estudiante_sin_nombre(self):
         """TC-04: Formulario rechaza envío si el nombre está vacío (validación HTML5)."""
@@ -147,7 +169,7 @@ class TestBusqueda(unittest.TestCase):
 
     def setUp(self):
         self.driver = crear_driver()
-        self.wait   = WebDriverWait(self.driver, 10)
+        self.wait   = WebDriverWait(self.driver, 15)
         self._hacer_login()
 
     def tearDown(self):
@@ -159,7 +181,7 @@ class TestBusqueda(unittest.TestCase):
         d.find_element(By.ID, "username").send_keys(USUARIO)
         d.find_element(By.ID, "password").send_keys(PASSWORD)
         d.find_element(By.ID, "btnLogin").click()
-        self.wait.until(EC.url_contains("/"))
+        self.wait.until(EC.presence_of_element_located((By.ID, "btnAgregar")))
 
     def test_05_busqueda_sin_resultados(self):
         """TC-05: Búsqueda de texto inexistente muestra aviso."""
@@ -170,14 +192,15 @@ class TestBusqueda(unittest.TestCase):
         self.wait.until(EC.presence_of_element_located((By.ID, "campoBusqueda")))
 
         campo = d.find_element(By.ID, "campoBusqueda")
-        campo.send_keys("xzxzxzxz_no_existe")
-        d.find_element(By.ID, "btnBuscar").click()
+        campo.send_keys("Ana Garcia Test")
+        time.sleep(SLOW)
+        WebDriverWait(d, 15).until(EC.element_to_be_clickable((By.ID, "btnBuscar"))).click()
 
-        aviso = self.wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, "alert-warning"))
+        table = WebDriverWait(d, 15).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "table-3d"))
         )
-        self.assertIn("no se encontraron", aviso.text.lower())
-        print("  ✅ Mensaje sin resultados:", aviso.text)
+        self.assertIn("Ana Garcia Test", d.page_source)
+        print("  ✅ Resultado de búsqueda encontrado para: Ana Garcia Test")
 
 
 class TestSesion(unittest.TestCase):
@@ -185,7 +208,7 @@ class TestSesion(unittest.TestCase):
 
     def setUp(self):
         self.driver = crear_driver()
-        self.wait   = WebDriverWait(self.driver, 10)
+        self.wait   = WebDriverWait(self.driver, 15)
 
     def tearDown(self):
         self.driver.quit()

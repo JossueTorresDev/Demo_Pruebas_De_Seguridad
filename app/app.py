@@ -178,6 +178,20 @@ def api_estudiantes():
     return jsonify([dict(r) for r in rows])
 
 
+@app.route("/api/buscar")
+@login_required
+def api_buscar():
+    q = request.args.get("q", "").strip()
+    resultados = []
+    if q:
+        with get_db() as conn:
+            resultados = conn.execute(
+                "SELECT * FROM estudiantes WHERE nombre LIKE ? OR carnet LIKE ?",
+                (f"%{q}%", f"%{q}%")
+            ).fetchall()
+    return jsonify([dict(r) for r in resultados])
+
+
 # ─── Arranque ─────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":

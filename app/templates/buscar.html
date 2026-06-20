@@ -55,6 +55,7 @@
 </form>
 
 <!-- Resultados -->
+<div id="searchResults">
 {% if q %}
 
   {% if resultados %}
@@ -149,5 +150,84 @@
   </div>
 
 {% endif %}
+</div>
+
+<script>
+// Búsqueda en vivo: escucha el input y consulta /api/buscar?q=
+(function(){
+  const campo = document.getElementById('campoBusqueda');
+  const results = document.getElementById('searchResults');
+  if (!campo || !results) return;
+  let timer = null;
+  function renderEmpty(q){
+    results.innerHTML = `
+      <div class="glass-card" role="status" aria-live="polite">
+        <div class="empty-state">
+          <div class="empty-icon" aria-hidden="true">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <h3>Sin resultados</h3>
+          <p>No se encontraron estudiantes para <strong style="color:var(--clr-accent);">"${q}"</strong>.</p>
+        </div>
+      </div>`;
+  }
+  function renderTable(items,q){
+    let html = '';
+    html += `<div class="results-meta" role="status" aria-live="polite">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span><strong>${items.length}</strong> resultado${items.length!==1? 's':''} para "${q}"</span>
+            </div>`;
+    html += `<div class="table-3d-wrap" role="region" aria-label="Resultados de búsqueda">
+              <table class="table-3d" aria-label="Resultados de la búsqueda">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Estudiante</th>
+                    <th scope="col">Carnet</th>
+                    <th scope="col">Nota</th>
+                    <th scope="col">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+    for (const e of items){
+      html += `<tr>
+                <td><span class="id-badge" aria-label="ID ${e.id}">${e.id}</span></td>
+                <td><div class="student-name"><div class="student-avatar" aria-hidden="true">${e.nombre? e.nombre.charAt(0):'?'}</div><span>${e.nombre}</span></div></td>
+                <td><span class="carnet-tag">${e.carnet}</span></td>
+                <td><span class="nota-badge ${e.nota>=6? 'nota-pass':'nota-fail'}" aria-label="Nota: ${e.nota}">${e.nota}</span></td>
+                <td><span style="font-size:0.78rem; font-weight:600; color:${e.nota>=6? 'var(--clr-success)':'var(--clr-danger)'}">${e.nota>=6? 'Aprobado':'Reprobado'}</span></td>
+              </tr>`;
+    }
+    html += `</tbody></table></div>`;
+    results.innerHTML = html;
+  }
+
+  campo.addEventListener('input', function(){
+    clearTimeout(timer);
+    const q = campo.value.trim();
+    timer = setTimeout(async ()=>{
+      if (!q){
+        // show initial prompt
+        results.innerHTML = `<div class="glass-card"><div class="empty-state"><div class="empty-icon" aria-hidden="true"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/></svg></div><h3>Ingresa un término</h3><p>Escribe un nombre o carnet en el campo de arriba para comenzar la búsqueda.</p></div></div>`;
+        return;
+      }
+      try{
+        const resp = await fetch(`/api/buscar?q=${encodeURIComponent(q)}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!data || data.length === 0) renderEmpty(q);
+        else renderTable(data,q);
+      }catch(e){
+        console.error('Search error', e);
+      }
+    }, 300);
+  });
+})();
+</script>
 
 {% endblock %}
